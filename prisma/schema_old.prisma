@@ -1,0 +1,452 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String    @id @default(uuid())
+  role_id                Int       @default(1)
+  active                 Boolean   @default(true)
+  profile_route_img      String?
+  email                  String
+  password               String
+  birth_date             DateTime?
+  first_name             String
+  last_name              String
+  document_number        String?   @default("")
+  phone_number           String    @default("")
+  country                String    @default("")
+  state                  String    @default("")
+  city                   String    @default("")
+  address                String    @default("")
+  complement             String    @default("")
+  zipcode                Int       @default(0)
+  country_code           String    @default("")
+  notification_new_login Boolean   @default(false)
+  account_status_id      Int       @default(1)
+  token_integration      String    @default(uuid())
+  auth_two_factor        Boolean   @default(false)
+  auth_id                String?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @default(now())
+
+  document         Document[]
+  Wallet           Wallet[]
+  NoticeUser       NoticeUser[]
+  OperationAccount OperationAccount[]
+  userCreated      Ticket[]           @relation("userCreated")
+  TicketMessage    TicketMessage[]
+  UserHistoryIP    UserHistoryIP[]
+  UserNotification UserNotification[]
+  passwordRecoveries PasswordRecovery[]
+
+  userRole      UserRole      @relation(fields: [role_id], references: [id])
+  accountStatus AccountStatus @relation(fields: [account_status_id], references: [id])
+
+  @@map("user")
+}
+
+model AccountStatus {
+  id          Int    @id @default(autoincrement())
+  description String
+
+  user User[]
+  @@map("account_status")
+}
+
+model UserHistoryIP {
+  id             Int      @id @default(autoincrement())
+  user_reference String
+  date           DateTime
+  ip             String
+  success        Boolean
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+
+  user User @relation(fields: [user_reference], references: [id])
+
+  @@map("user_history_ip")
+}
+
+model AccountLock {
+  id                   Int       @id @default(autoincrement())
+  operation_account_id String
+  platform             Platform
+  start_lock           DateTime
+  end_lock             DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @default(now())
+
+  operationAccount OperationAccount @relation(fields: [operation_account_id], references: [id])
+
+  @@map("account_lock")
+}
+
+model OperationAccount {
+  id                String   @id @default(uuid())
+  user_reference    String
+  account_name      String
+  network_id        Int
+  currency_id       String
+  platform          Platform
+  account_number    Int      @unique
+  account_type_id   Int
+  balance_available Decimal  @default(0)
+  balance_blocked   Decimal  @default(0)
+  balance_total     Decimal  @default(0)
+  leverage          String
+  active            Boolean  @default(true)
+  hash_address      String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now())
+
+  accountLock  AccountLock[]
+  extract      Extract[]
+  user         User                 @relation(fields: [user_reference], references: [id])
+  account_type OperationAccountType @relation(fields: [account_type_id], references: [id])
+  Network      Network              @relation(fields: [network_id], references: [id])
+  Currency     Currency             @relation(fields: [currency_id], references: [id])
+
+  Movement Movement[]
+  @@map("operation_account")
+}
+
+model OperationAccountType {
+  id          Int      @id @default(autoincrement())
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  // Live
+  // Demo
+  OperationAccount OperationAccount[]
+
+  @@map("operation_account_type")
+}
+
+model Currency {
+  id         String   @id @default(uuid())
+  active     Boolean  @default(true)
+  name       String
+  initials   String
+  route_img  String
+  networks   Json
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  Wallet Wallet[]
+
+  OperationAccount OperationAccount[]
+  @@map("currency")
+}
+
+enum Platform {
+  Botmoney
+  Metatrader5
+}
+
+model Document {
+  id                String    @id @default(uuid())
+  user_reference    String
+  user_validated_id String?
+  document_type     String
+  route_img         String    @default("")
+  status_id         Int       @default(1)
+  comment           String    @default("")
+  date_request      DateTime  @default(now())
+  date_validated    DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now())
+
+  user User @relation(fields: [user_reference], references: [id])
+
+  document_status DocumentStatus @relation(fields: [status_id], references: [id])
+  @@map("document")
+}
+
+model Exchange {
+  id         String   @id @default(uuid())
+  name       String
+  route_img  String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  Wallet Wallet[]
+
+  @@map("exchange")
+}
+
+model Extract {
+  id                       String   @id @default(uuid())
+  operation_account_number Int
+  date                     DateTime
+  description              String
+  value                    Decimal
+  total_value              Decimal?
+  created_at               DateTime @default(now())
+  updated_at               DateTime @default(now())
+
+  operationAccount OperationAccount @relation(fields: [operation_account_number], references: [account_number])
+
+  @@map("extract")
+}
+
+model GlobalConfiguration {
+  id                            Int      @id @default(autoincrement())
+  taxLot                        Decimal
+  tax_deposit_percentage        Decimal
+  tax_deposit_fixed             Decimal
+  tax_withdraw_percentage       Decimal
+  tax_withdraw_fixed            Decimal
+  minimum_withdraw_amount       Decimal
+  maximum_withdraw_amount       Decimal
+  maximum_daily_withdraw_amount Decimal
+  created_at                    DateTime @default(now())
+  updated_at                    DateTime @default(now())
+
+  @@map("global_configuration")
+}
+
+model Movement {
+  id                       String    @id @default(uuid())
+  wallet_id                Int?
+  operation_account_number Int?
+  type_operation_id        Int
+  description              String
+  status_id                Int
+  value                    Decimal
+  validation_code_email    Int?
+  hash_origin              String?   @unique
+  hash_destination         String?   @unique
+  hash                     String?   @unique
+  date_validation          DateTime?
+  date_processing          DateTime?
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @default(now())
+
+  wallet            Wallet?               @relation(fields: [wallet_id], references: [id])
+  operation_account OperationAccount?     @relation(fields: [operation_account_number], references: [account_number])
+  type_operation    MovementTypeOperation @relation(fields: [type_operation_id], references: [id])
+  status            MovementStatus        @relation(fields: [status_id], references: [id])
+
+  @@map("movement")
+}
+
+model Wallet {
+  id             Int      @id @default(autoincrement())
+  user_reference String
+  exchange_id    String
+  network_id     Int
+  currency_id    String
+  hash_address   String?  @unique
+  active         Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+
+  user     User       @relation(fields: [user_reference], references: [id])
+  exchange Exchange   @relation(fields: [exchange_id], references: [id])
+  Network  Network    @relation(fields: [network_id], references: [id])
+  Currency Currency   @relation(fields: [currency_id], references: [id])
+  Movement Movement[]
+
+  @@map("wallet")
+}
+
+model Network {
+  id         Int      @id @default(autoincrement())
+  name       String
+  initials   String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  Wallet Wallet[]
+
+  OperationAccount OperationAccount[]
+  @@map("network")
+}
+
+model Notice {
+  id                  Int      @id @default(autoincrement())
+  notice_reference_id Int
+  date_start          DateTime
+  title               String
+  active              Boolean  @default(true)
+  html                String
+  created_at          DateTime @default(now())
+  updated_at          DateTime @default(now())
+
+  NoticeUser NoticeUser[]
+
+  @@map("notice")
+}
+
+model NoticeUser {
+  id             Int      @id @default(autoincrement())
+  notice_id      Int
+  user_reference String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+
+  notice Notice @relation(fields: [notice_id], references: [id])
+  user   User   @relation(fields: [user_reference], references: [id])
+
+  @@map("notice_user")
+}
+
+model Ticket {
+  id                  Int       @id @default(autoincrement())
+  user_created_id     String
+  user_ticket_history Json? // "user_support_id" and "user_closed_id"
+  status_id           Int
+  subject             String
+  code                String
+  date_updated        DateTime?
+  date_closed         DateTime?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now())
+
+  user_created  User         @relation("userCreated", fields: [user_created_id], references: [id])
+  ticket_status TicketStatus @relation(fields: [status_id], references: [id])
+
+  TicketMessage TicketMessage[]
+
+  @@map("ticket")
+}
+
+model TicketMessage {
+  id             Int      @id @default(autoincrement())
+  ticket_id      Int
+  user_reference String
+  date           DateTime
+  restricted     Boolean  @default(false)
+  message        String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+
+  ticket            Ticket              @relation(fields: [ticket_id], references: [id])
+  user              User                @relation(fields: [user_reference], references: [id])
+  TicketMessageFile TicketMessageFile[]
+
+  @@map("ticket_message")
+}
+
+model TicketMessageFile {
+  id                Int      @id @default(autoincrement())
+  ticket_message_id Int
+  name              String
+  route_img         String
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now())
+
+  ticketMessage TicketMessage @relation(fields: [ticket_message_id], references: [id])
+
+  @@map("ticket_message_file")
+}
+
+model UserNotification {
+  id             Int      @id @default(autoincrement())
+  user_reference String
+  name           String
+  description    String
+  read           Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+
+  user User @relation(fields: [user_reference], references: [id])
+
+  @@map("user_notification")
+}
+
+model TicketStatus {
+  id          Int      @id @default(autoincrement())
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  // Waiting Support
+  // Waiting User
+  // Finished
+  // Expired
+
+  Ticket Ticket[]
+
+  @@map("ticket_status")
+}
+
+model UserRole {
+  id          Int      @id @default(autoincrement())
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  // 1 - User
+  // 2 - Support
+  // 3 - Admin
+  // 4 - Master
+
+  User User[]
+
+  @@map("user_role")
+}
+
+model MovementStatus {
+  id          Int      @id @default(autoincrement())
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  // Waiting Validation
+  // Waiting Transaction
+  // Denied
+  // Canceled
+  // Approved
+  Movement Movement[]
+
+  @@map("movement_status")
+}
+
+model MovementTypeOperation {
+  id          Int      @id @default(autoincrement())
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  // Deposit
+  // WithDraw
+  Movement Movement[]
+
+  @@map("movement_type_operation")
+}
+
+model DocumentStatus {
+  id          Int      @id @default(autoincrement())
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  //Waiting Upload
+  //Waiting Validation
+  //Denied
+  //Approved
+  Document Document[]
+
+  @@map("document_status")
+}
+
+model PasswordRecovery {
+  id String @id @default(uuid())
+
+  user_id String
+  created_at DateTime @default(now())
+  expires_at DateTime
+  is_valid Boolean @default(true)
+  token String @unique
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("password_recoveries")
+}

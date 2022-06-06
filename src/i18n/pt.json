@@ -1,0 +1,29 @@
+{
+    "auth": {
+        "login": {
+            "success": "Login realizado com sucesso"
+        },
+        "password": {
+            "recovery": {
+                "title": "Olá {{ user_name }}, sua recuperação de senha...",
+                "bt": "Recuperar senha"
+            },
+            "generation": {
+                "title": "Olá {{user_name}}, segue sua senha de acesso"
+            }
+        }
+    },
+    "device": {
+        "error": {
+            "invalid_device_type": "Invalid device type informed. Available types: DESKTOP, TABLET, SMARTPHONE."
+        }
+    },
+    "operation_account": {
+        "invalid_group": "Não foi possível localizar o group da conta. Configuração de conta inválida.",
+        "invalid_operation_account_type": "Tipo de conta informado é inválido",
+        "invalid_account_filter": "Invalid operation account filter. Available options: ALL, JUST_ACTIVE_ROBOT, WITHOUT_ACTIVE_ROBOT."
+    },
+    "botmoney": {
+        "invalid_integration_token": "Token de integração inválido!"
+    }
+}

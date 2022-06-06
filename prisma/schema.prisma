@@ -1,0 +1,597 @@
+
+generator client {
+    provider = "prisma-client-js"
+    previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url = env("DATABASE_URL")
+}
+
+model User {
+    id String @id @db.Uuid @default(uuid())
+    
+    is_active Boolean @default(true)
+    email String @unique
+    email_checked_at DateTime?
+    birth_date DateTime?
+    first_name String
+    last_name String
+    phone_number String?
+    document_number String?
+
+    created_at DateTime @default(now())
+    updated_at DateTime? @updatedAt
+
+    nationality_id String? @db.Char(2)
+	region_id String? @db.Char(2)
+
+    nationality Country? @relation("user_nationality_fk", fields: [nationality_id], references: [iso_code])
+    region Country? @relation("user_region_fk", fields: [region_id], references: [iso_code])
+
+    userRoles UserRole[]
+    rolesRequests UserRoleRequest[]
+    addresses Address[]
+    document Document[]
+    emailValidation EmailValidation?
+    acceptanceTermsHistory AcceptanceTermHistory[]
+
+    @@map("users")
+}
+
+model UserRole {
+    id String @id @db.Uuid @default(uuid())
+
+    password String
+    status UserRoleStatus @default(WAITING)
+    integration_token String @default(uuid())
+    integrated_account_id String? @db.Uuid @unique //botmoney user id
+    integrated_at DateTime?
+    manager_code String? @db.Char(6) @unique
+    metatrader_client_id Int?
+
+    manager_id String? @db.Uuid
+    user_id String @db.Uuid
+    role_id String @db.Uuid
+
+    user User? @relation(fields: [user_id], references: [id])
+    role Role? @relation(fields: [role_id], references: [id])
+    manager UserRole? @relation("manager_id_fk", fields: [manager_id], references: [id])
+    clients UserRole[] @relation("manager_id_fk")
+
+    password_recoveries PasswordRecovery[]
+    actions_logs ActionLog[]
+    requests UserRoleRequest[]
+    devices Device[]
+    wallet Wallet?
+    operationAccounts OperationAccount[]
+    notifications Notification[]
+    transaction_histories TransactionHistory[]
+    transaction_requests TransactionRequest[]
+
+    @@map("user_roles")
+}
+
+model UserRoleRequest {
+    id String @id @db.Uuid @default(uuid())
+
+    status UserRoleRequestStatus
+    type UserRoleRequestType
+
+    user_id String @db.Uuid
+    user_role_id String @db.Uuid
+
+    users User @relation(fields: [user_id], references: [id])
+    userRoles UserRole @relation(fields: [user_role_id], references: [id])
+
+    @@map("user_role_requests")
+}
+
+enum UserRoleRequestStatus {
+	APPROVED
+	REFUSED
+  	AWAITING
+
+  	@@map("user_role_request_status")
+}
+
+enum UserRoleRequestType {
+    CREATE
+    DELETE
+
+    @@map("user_role_request_type")
+}
+
+model Notification {
+	id String @id @db.Uuid @default(uuid())
+   
+	subject_key String // ex account.aproved  "Account validation"
+	subject_args Json // []
+	text_key String // ex: account.aproved "Mr {1}, your account has been aproved"
+	text_args Json // The text to be replaced on the {1} ["Giulio"] - "Mr Giulio, your account [...]"
+	datetime DateTime 
+	is_read Boolean @default(false)
+
+	user_role_id String @db.Uuid
+	userRole UserRole @relation(fields: [user_role_id], references: [id])
+
+	@@map("notifications")
+}
+
+model Address {
+    id String @id @db.Uuid @default(uuid())
+
+    cep String
+    number Int
+    street String
+    city String
+    state String
+    country_id String @db.Char(2)
+    neighborhood String
+    complement String?
+
+    created_at DateTime @default(now())
+    updated_at DateTime? @updatedAt
+    deleted_at DateTime?
+
+    user_id String @db.Uuid
+
+    user User? @relation(fields: [user_id], references: [id])
+    country Country @relation(fields: [country_id], references: [iso_code])
+
+    @@map("addresses")
+}
+
+model Country {
+    iso_code String @id @db.Char(2)
+
+    name String @unique
+    ddi String?
+    is_support_as_region Boolean @default(false)
+
+    users User[] @relation("user_nationality_fk")
+    userRegions User[] @relation("user_region_fk")
+
+    adresses Address[]
+
+    @@map("countries")
+}
+
+model Role {
+    id String @id @db.Uuid @default(uuid())
+
+    name String @unique
+
+    userRoles UserRole[]
+    roleDocumentType RoleDocumentType[]
+
+    @@map("roles")
+}
+
+enum UserRoleStatus {
+    ACTIVE
+    REFUSED
+    WAITING
+}
+
+model PreferencesConfig {
+    id String @id @db.Uuid @default(uuid())
+
+    theme Theme @default(DEFAULT)
+    anti_fishing_argument String?
+
+    @@map("preferences_config")
+}
+
+enum Theme {
+    DEFAULT
+
+    @@map("theme")
+}
+
+model RoleDocumentType {
+    id String @id @db.Uuid @default(uuid())
+
+    role_id String @db.Uuid
+    document_type_id String @db.Uuid
+
+    role Role @relation(fields: [role_id], references: [id])
+    document_type DocumentType @relation(fields: [document_type_id], references: [id])
+
+    @@map("role_document_types")
+}
+
+model DocumentType {
+    id String @id @db.Uuid @default(uuid())
+    name String @unique
+
+    document Document[]
+    roleDocumentType RoleDocumentType[]
+
+    @@map("document_types")
+}
+
+model Document {
+    id String @id @db.Uuid @default(uuid())
+    
+    user_id String @db.Uuid
+    user_validated_id String? @db.Uuid
+    document_type_id String @db.Uuid
+    route_url String
+    document_status DocumentStatus @default(WAITING_VALIDATION)
+    comment String?
+    
+    uploaded_at DateTime @default(now())
+    validated_at DateTime?
+    updated_at DateTime? @updatedAt
+
+    reject_reason_id String? @db.Uuid
+
+    rejectReason RejectReason? @relation(fields: [reject_reason_id], references: [id])
+    user User @relation(fields: [user_id], references: [id])
+    document_type DocumentType @relation(fields: [document_type_id], references: [id])
+
+    @@map("document")
+}
+
+model RejectReason {
+    id String @id @db.Uuid @default(uuid())
+
+    description String
+
+    documents Document[]
+
+    @@map("reject_reasons")
+}
+
+enum DocumentStatus {
+    WAITING_UPLOAD
+    WAITING_VALIDATION
+    DENIED
+    APPROVED
+}
+
+model PasswordRecovery {
+    id String @id @db.Uuid @default(uuid())
+
+    user_role_id String @db.Uuid
+    created_at DateTime @default(now())
+    expires_at DateTime
+    is_valid Boolean @default(true)
+    token String @unique
+
+    user_role UserRole @relation(fields: [user_role_id], references: [id])
+
+    @@map("password_recoveries")
+}
+
+model ActionLog {
+    id String @id @db.Uuid @default(uuid())
+
+    ip String?
+    datetime DateTime @default(now())
+    action ActionType
+
+    device_id String? @db.Uuid
+    user_role_id String @db.Uuid
+
+    device Device? @relation(fields: [device_id], references: [id])
+    userRole UserRole @relation(fields: [user_role_id], references: [id])
+
+    @@map("actions_logs")
+}
+
+enum ActionType {
+    LOGIN
+    LOGOUT
+    RECOVERY_PASSWORD
+    REGISTER
+
+    @@map("action_type")
+}
+
+model AcceptanceTermHistory {
+    id String @id @db.Uuid @default(uuid())
+
+    accepted Boolean @default(false)
+    date DateTime
+
+    user_id String @db.Uuid
+    acceptance_term_id String @db.Uuid
+
+    user User @relation(fields: [user_id], references: [id])
+    term AcceptanceTerm @relation(fields: [acceptance_term_id], references: [id])
+
+    @@map("acceptance_term_histories")
+}
+
+model AcceptanceTerm {
+    id String @id @db.Uuid @default(uuid())
+
+    is_active Boolean @default(true)
+    expiry_date DateTime?
+    content String
+
+    created_at DateTime @default(now())
+    created_by String //user_role id
+    updated_at DateTime? @updatedAt
+    updated_by String? //user_role id
+    deactivated_at DateTime?
+
+    acceptanceTermHistories AcceptanceTermHistory[]
+
+    @@map("acceptance_terms")
+}
+
+model EmailValidation {
+    id String @id @db.Uuid @default(uuid())
+
+    user_id String @db.Uuid
+    email String
+    token String @unique
+    is_active Boolean @default(true)
+    checked_at DateTime?
+
+    created_at DateTime @default(now())
+
+    user User @relation(fields: [user_id], references: [id])
+
+    @@map("email_validations")
+}
+
+model Device {
+    id String @id @db.Uuid @default(uuid())
+
+    mac_address String?
+    type DeviceType?
+
+    user_role_id String @db.Uuid
+
+    userRole UserRole @relation(fields: [user_role_id], references: [id])
+
+    actionsLogs ActionLog[]
+
+    @@map("devices")
+}
+
+enum DeviceType {
+  DESKTOP
+  SMARTPHONE
+  TABLET
+}
+
+model Wallet {
+    id String @id @db.Uuid @default(uuid())
+
+    address String? //blockchain address
+    private_key String? // TODO - rever gestão da chave
+    balance Float @default(0.0)
+
+    created_at DateTime @default(now())
+    updated_at DateTime?
+
+    user_role_id String @db.Uuid
+
+    userRole UserRole @relation(fields: [user_role_id], references: [id])
+
+    @@map("wallet")
+}
+
+model OperationAccount {
+    id String @id @db.Uuid @default(uuid())
+
+    name String @default("")
+    balance Float?
+    account_number Int?
+    is_demo Boolean @default(true)
+    metatrader_group String?
+    operation_type OPERATION_TYPE @default(METATRADER)
+    spread_type SPREAD_TYPE?
+    leverage LEVERAGE?
+    main_password String @default("")
+    investor_password String @default("")
+    is_robot_active Boolean?
+    robot_expires_at DateTime?
+
+    created_at DateTime @default(now())
+    updated_at DateTime? @updatedAt
+    deleted_at DateTime?
+
+    user_role_id String @db.Uuid
+    robot_id String? @db.Uuid
+
+    userRole UserRole @relation(fields: [user_role_id], references: [id])
+    robot Robot? @relation(fields: [robot_id], references: [id])
+
+    processes OperationAccountProcess[]
+    fundsHistory FundsHistory[]
+    traderHistory TraderHistory[]
+    operationRequests RobotOperationRequest[]
+
+    @@map("operation_accounts")
+}
+
+model RobotOperationRequest {
+    id String @id @db.Uuid @default(uuid())
+
+    executed_at DateTime?
+    request_type REQUEST_TYPE
+    status REQUEST_STATUS
+    
+    requested_at DateTime @default(now())
+
+    operation_account_id String @db.Uuid
+    robot_id String @db.Uuid
+
+    operationAccount OperationAccount @relation(fields: [operation_account_id], references: [id])
+    robot Robot @relation(fields: [robot_id], references: [id])
+
+    @@map("robot_operation_requests")
+}
+
+enum REQUEST_TYPE {
+    START
+    STOP
+}
+
+enum REQUEST_STATUS {
+    APROVED
+    DENIED
+    WAITING
+}
+
+enum LEVERAGE {
+    ONE_TO_100
+    ONE_TO_300
+    ONE_TO_1000
+}
+
+enum SPREAD_TYPE {
+    STANDARD
+    RAW_SPREAD
+}
+
+model OperationAccountProcess { // TODO - rever tabela
+    id String @id @db.Uuid @default(uuid())
+
+    data String 
+    date DateTime
+
+    operation_account_id String @db.Uuid
+
+    operationAccount OperationAccount @relation(fields: [operation_account_id], references: [id])
+
+    @@map("operation_account_processes")
+}
+
+model FundsHistory {
+    id String @id @db.Uuid @default(uuid())
+
+    profit Float // loss represented with negative values
+    profit_or_loss ProfitOrLoss
+    date DateTime
+
+    operation_account_id String @db.Uuid
+
+    operationAccount OperationAccount @relation(fields: [operation_account_id], references: [id])
+
+    @@map("funds_history")
+}
+
+enum ProfitOrLoss {
+    PROFIT
+    LOSS
+
+    @@map("profit_or_loss")
+}
+
+model Robot {
+    id String @id @db.Uuid @default(uuid())
+
+    name String
+    origin RobotOrigin
+    origin_code String
+
+    created_at DateTime @default(now())
+    created_by String //user_role id
+    updated_at DateTime?
+    updated_by String //user_role id
+    deleted_at DateTime?
+
+    operationAccounts OperationAccount[]
+    operationRequests RobotOperationRequest[]
+
+    @@map("robots")
+}
+
+enum RobotOrigin {
+    BOTMONEY
+    OTHER
+
+    @@map("robot_origin")
+}
+
+enum OPERATION_TYPE {
+    METATRADER
+    BOTMONEY
+}
+
+enum TransactionRequestStatus {
+    WAITING
+    APPROVED
+    REFUSED
+}
+
+model TransactionRequest {
+    id String @id @db.Uuid @default(uuid())
+
+    source String // wallet_id - "BINANCE_SMART_CHAIN_EXTERNAL_ADDRESS"
+    target String // same as source
+    amount Float
+    status TransactionRequestStatus @default(WAITING)
+    reason String?
+    external_reference String? @unique // Identify of transaction in a AXBank api. Only for deposits and rescues.
+
+    created_at DateTime @default(now())
+    processed_at DateTime?
+
+    type_id String @db.Uuid
+    user_role_id String @db.Uuid
+
+    type TransactionType @relation(fields: [type_id], references: [id])
+    userRoles UserRole @relation(fields: [user_role_id], references: [id])
+
+    @@map("transaction_requests")
+}
+
+model TransactionHistory {
+    id String @id @db.Uuid @default(uuid())
+
+    source String
+    target String
+    amount Float
+    processed_at DateTime @default(now())
+    external_reference String? @unique // Identify of transaction in a AXBank api. Only for deposits and rescues.
+
+    type_id String @db.Uuid
+    user_role_id String @db.Uuid
+
+    type TransactionType @relation(fields: [type_id], references: [id])
+    userRoles UserRole @relation(fields: [user_role_id], references: [id])
+
+    @@map("transaction_history")
+}
+
+model TransactionType {
+    id String @id @db.Uuid @default(uuid())
+
+    name String @unique // withdraw
+    from TransactionEntity // select_wallet
+    to TransactionEntity // operation_account
+
+    transactionRequests TransactionRequest[]
+    transactionsHistory TransactionHistory[]
+
+    @@map("transaction_types")
+}
+
+enum TransactionEntity {
+    WALLET
+    OPERATION_ACCOUNT
+    BINANCE_SMART_CHAIN
+
+    @@map("transaction_entity")
+}
+
+model TraderHistory { // TODO
+    id String @id @db.Uuid @default(uuid())
+
+    operation_account_id String @db.Uuid
+
+    datetime DateTime
+
+    operationAccount OperationAccount @relation(fields: [operation_account_id], references: [id])
+
+    @@map("trader_history")
+}

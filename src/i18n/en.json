@@ -1,0 +1,179 @@
+{   "success": "success",
+    "auth": {
+        "not_authenticated": "User not authenticated",
+        "login": {
+            "success": "Login success",
+            "registered": "Registered"
+        },
+        "credentials": {
+            "invalid": "Invalid credentials",
+            "invalid_integration_token": "Invalid integration token"
+        },
+        "pessword_recovery": {
+            "title": "Hello {{ user_name }}, your password recovery...",
+            "bt": "Password recovery",
+            "already_requested": "You already requested the recovery",
+            "requested": "Password recovery requested",
+            "changed": "Password changed"
+        },
+        "email_confirmation": {
+            "email_not_verified": "Your email is not verified.",
+            "title": "Hello {{ user_name }}, confirm your email",
+            "bt": "Confirm email"
+        },
+        "password_generation": {
+            "title": "Hello {{user_name}}, your first password generated automatically",
+            "body":"Password: {{password}}"
+        },
+        "validations": {
+            "passwords_differs": "The password and password confirm aren't the same"
+        }
+    },
+    "user": {
+        "not_found": "User not found",
+        "already_exists": "User already exists",
+        "list": "User list",
+        "created": "User created",
+        "updated": "User updated",
+        "role": {
+            "not_found": "User role not found",
+            "already_exist": "User already has this role",
+            "password_invalid": "This password is the old password or used on one of your other accounts"
+        },
+        "documents": {
+            "not_uploaded": "Error uploading documents"
+        },
+        "profile": {
+            "updated": "Profile updated",
+            "change_password": {
+                "invalid": "Password change invalid",
+                "changed": "Password changed"
+            },
+            "documents": {
+                "uploaded": "Document uploaded"
+            }
+        }
+    },
+    "role": {
+        "not_found": "Role not found"
+    },
+    "manager": {
+        "not_created": "Error creating manager",
+        "created": "Manager created"
+    },
+    "document": {
+        "not_found": "Document not found",
+        "approved": "Document approved",
+        "reproved": "Document reproved"
+    },
+    "token": {
+        "invalid": "Token invalid"
+    },
+    "error": {
+        "password_generation": "Error generating password"
+    },
+    "email": {
+        "send": {
+            "error": "Send email error"
+        },
+        "check": {
+            "send_error": "Send email error"
+        },
+        "validated": "Email validated"
+    },
+    "notification": {
+        "list": "Notifications",
+        "unreaded": "Notifications unreaded",
+        "readed": "Notifications readed"
+    },
+    "country": {
+        "list": "Country list"
+    },
+    "device": {
+        "error": {
+            "invalid_device_type": "Invalid device type informed. Available types: DESKTOP, TABLET, SMARTPHONE."
+        }
+    },
+    "transaction": {
+        "options": "Transaction options",
+        "type": {
+            "not_found": "Transaction type not found"
+        },
+        "request": {
+            "complete": "Request completed",
+            "cancel": "Request canceled",
+            "already_proccessed": "This transaction is already proccessed"
+        },
+        "application": {
+            "created": "Application created successfully",
+            "error": "Error creating application",
+            "operation_account": {
+                "is_demo": "You cannot transfer to a demo account"
+            }
+        },
+        "rescue": {
+            "created": "Rescue created successfully",
+            "error": "Error creating rescue"
+        },
+        "deposit": {
+            "created": "A new deposit landed in your wallet"
+        }
+    },
+    "wallet": {
+        "name": "Wallet",
+        "not_found": "Wallet not found",
+        "balance": {
+            "insufficient": "Balance insufficient"
+        }
+    },
+    "ax": {
+        "error": {
+            "unautenticated": "Unautenticated in AXBank",
+            "wallet": "Error creating wallet in AXBank"
+        },
+        "wallet": {
+            "created": "Wallet created",
+            "not_found": "Wallet not found",
+            "address_not_found": "Wallet address not found",
+            "address": "Wallet address"
+        },
+        "deposit": {
+            "amount_invalid": "Amount invalid",
+            "already_exists": "Deposit already exists"
+        },
+        "webhook": {
+            "not_supported": "This type of transaction is not supported."
+        }
+    },
+    "mt5": {
+        "update_balance": {
+            "error": "Error on updating operation account balance in MT5 API"
+        }
+    },
+    "operation_account": {
+        "not_found": "Operation account not found",
+        "invalid_group": "Was not possible to find the account group. Invalid account configuration.",
+        "invalid_operation_account_type": "Informed operation account type is not valid.",
+        "balance": {
+            "insufficient": "Balance insufficient"
+        },
+        "invalid_account_filter": "Invalid operation account filter. Available options: ALL, JUST_ACTIVE_ROBOT, WITHOUT_ACTIVE_ROBOT."
+    },
+    "botmoney": {
+        "invalid_integration_token": "Invalid integration token!",
+        "missing_operation_account": "You must inform the operation account! (operation_account_id)",
+        "missing_integration_token": "You must inform the integration_token!",
+        "missing_botmoney_reference": "You must inform botmoney_reference!"
+    },
+    "enum": {
+        "not_found": "Enum not found"
+    },
+    "robot": {
+        "could_not_find_robot": "Could not find robot!",
+        "operation_account_already_in_use": "This operation account is already running a trade robot!",
+        "operation_account_invalid_operation_type": "The operation account must be of BOTMONEY type!",
+        "there_is_already_other_request_waiting": "There is already other request openned!",
+        "already_stopped": "This operation account has no robot running!",
+        "active_robot_but_missing_robot_id": "The operation account is running a robot, but the robot id is missing"
+    }
+}
